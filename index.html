@@ -42,6 +42,7 @@
   </div>
 
   <div class="petals" id="petals"></div>
+  <audio id="bgMusic" src="assets/sinh-nhat.mp3" preload="auto" loop playsinline></audio>
   <button class="music-fab" id="musicBtn" aria-label="Bật hoặc tắt nhạc" title="Bật/tắt nhạc">♪</button>
   <div class="shell">
     <section class="hero" id="top">
@@ -135,18 +136,29 @@
   }
   updateCountdown(); setInterval(updateCountdown,1000);
 
-  let audioCtx=null, gain=null, timer=null, playing=false;
-  const notes=[261.63,329.63,392.00,329.63,293.66,349.23,440.00,349.23];
-  function playTone(freq,when,dur){
-    const osc=audioCtx.createOscillator(); const g=audioCtx.createGain();
-    osc.type='sine'; osc.frequency.value=freq; g.gain.setValueAtTime(0.0001,when); g.gain.exponentialRampToValueAtTime(0.055,when+.04); g.gain.exponentialRampToValueAtTime(0.0001,when+dur);
-    osc.connect(g).connect(gain); osc.start(when); osc.stop(when+dur+.05);
+  const bgMusic = $('bgMusic');
+  bgMusic.volume = 0.38;
+  let playing = false;
+
+  async function startMusic(){
+    if(playing)return;
+    try{
+      await bgMusic.play();
+      playing = true;
+      $('musicBtn').textContent='♫';
+      $('musicBtn').title='Tắt nhạc';
+    }catch(err){
+      playing = false;
+      $('musicBtn').textContent='♪';
+      toast('Chạm nút ♪ để phát nhạc');
+    }
   }
-  function startMusic(){
-    if(playing)return; audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==='suspended')audioCtx.resume(); gain=gain||audioCtx.createGain(); gain.gain.value=.45; gain.connect(audioCtx.destination); playing=true; $('musicBtn').textContent='♫';
-    const loop=()=>{ if(!playing)return; const base=audioCtx.currentTime+.05; notes.forEach((n,i)=>playTone(n,base+i*.47,.38)); timer=setTimeout(loop,notes.length*470); }; loop();
+  function stopMusic(){
+    bgMusic.pause();
+    playing=false;
+    $('musicBtn').textContent='♪';
+    $('musicBtn').title='Bật nhạc';
   }
-  function stopMusic(){playing=false;clearTimeout(timer);$('musicBtn').textContent='♪';}
   $('musicBtn').addEventListener('click',()=>playing?stopMusic():startMusic());
   $('openInvite').addEventListener('click',()=>{ $('openScreen').classList.add('done'); startMusic(); burst(); });
 
